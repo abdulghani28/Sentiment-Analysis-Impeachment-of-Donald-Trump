@@ -13,7 +13,7 @@ access_secret <- "nPxSkCS26dp8ft5GCG1OpqxowQR5ZjrMZXVmUYljOIuV0"
 
 setup_twitter_oauth(consumer_key, consumer_secret, access_token, access_secret)
 
-trump_tweets = searchTwitter("convict + trump", n=1000, lang="en")
+trump_tweets = searchTwitter("#convicttrump", n=2000, lang="en")
 
 #Data cleaning
 trumpTweets <- sapply(trump_tweets, function(x) x$getText())
@@ -34,21 +34,26 @@ catch.error = function(x)
 cleanTweets <- function(tweet) {
   #bersihkan tweet untuk sentiment analysis
   #remove html links:
-  tweet = gsub("(f|ht)(tp)(s?)(://)(.*)[.|/](.*)", " ", tweet)
+  tweet = gsub("(f|ht)(tp)(s?)(://)(.*)[.|/](.*)", "", tweet)
   #remove retweet entities:
-  tweet = gsub("(RT|via)((?:\\b\\W*@\\w+)+)", " ", tweet)
+  tweet = gsub("(RT|via)((?:\\b\\W*@\\w+)+)", "", tweet)
   #remove #hashtags:
-  tweet = gsub("#\\w+", " ", tweet)
+  tweet = gsub("#\\w+", "", tweet)
   #remove all "@people":
-  tweet = gsub("@\\w+", " ", tweet)
+  tweet = gsub("@\\w+", "", tweet)
   #remove all punctuations:
-  tweet = gsub("[[:punct:]]", " ", tweet)
+  tweet = gsub("[[:punct:]]", "", tweet)
   #remove numbers, kita hanya butuh teks untuk analytics
-  tweet = gsub("[[:digit:]]", " ", tweet)
+  tweet = gsub("[[:digit:]]", "", tweet)
   #remove unnecessary spaces (white spaces, tabs, etc)
-  tweet = gsub("[ \t]{2,}", " ", tweet)
+  tweet = gsub("[ \t]{2,}", "", tweet)
   tweet = gsub("^\\s+|\\s+$", "", tweet)
-  tweet = gsub(",", " ", tweet)
+  tweet = gsub(",", "", tweet)
+  tweet = gsub("trump", "", tweet)
+  tweet = gsub("donald", "", tweet)
+  tweet = gsub("\n", "", tweet)
+  stop_pattern <- paste0("\\b(", paste0(stopwords("en"), collapse="|"), ")\\b")
+  tweet <- gsub(stop_pattern, "", tweet)
   #jika ada lagi yang dirasa ingin dihilangkan, bisa. Contohnya, slang words/bahasa gaul dapat dihilangkan dengan cara serupa di atas.
   #ubah semua kata menjadi lowercase:
   tweet = catch.error(tweet)
@@ -76,7 +81,7 @@ opinion.lexicon.neg = scan("~/Sentiment_Analysis/scoring/s-neg.txt", what = "cha
 
 #Custom positive and negative words
 pos.words = c(opinion.lexicon.pos, "upgrade", "stay")
-neg.words = c(opinion.lexicon.neg, "convict","convicttrum","jail","trum","donaldtrum","convicttrump","convicttrumis","idiotconvicttrump","convicttrumexltheseditionists"," convicttrumdomesticterrorism","convicttrumexltheseditionists","convicttrumcovid","convicttrumconvictanddisqualifytrump"," convicttrumpresidenttrumrdongate")
+neg.words = c(opinion.lexicon.neg, "convict","convicttrum","jail","trum","donaldtrum","convicttrump","convicttrumis","idiotconvicttrump","convicttrumexltheseditionists"," convicttrumdomesticterrorism","convicttrumexltheseditionists","convicttrumcovid","convicttrumconvictanddisqualifytrump"," convicttrumpresidenttrumrdongate", "dead", "violent", "evil", "terror")
 
 #membuat fungsi score.sentiment(), yang bisa menghitung hasil sentimen mentah berdasarkan algoritma pencocokan sederhana:
 getSentimentScore = function(sentences, pos.words, neg.words, .progress = "none")
@@ -112,7 +117,7 @@ getSentimentScore = function(sentences, pos.words, neg.words, .progress = "none"
 trumpResult = getSentimentScore(trump_tweetsCleaned, pos.words, neg.words)
 
 #CONVERT SCORE TO SENTIMENT
-trumpResult$klasifikasi<- ifelse(trumpResult$score<0, "Negatif",ifelse(trumpResult$score==0, "Netral", "Positif"))
+trumpResult$klasifikasi<- ifelse(trumpResult$score<0, "Negatif", ifelse(trumpResult$score==0, "Netral", "Positif"))
 trumpResult$klasifikasi
 View(trumpResult)
 
