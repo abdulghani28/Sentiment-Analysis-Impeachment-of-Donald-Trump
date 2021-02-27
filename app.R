@@ -11,11 +11,13 @@ library(e1071)
 
 
 #load dataset
-trump_tweets = read.csv("~/Sentiment_Analysis/dataset/trumpResult1.csv", sep = ";")
+trump_tweets = read.csv("~/Documents/KULIAH/Informatika/SEMESTER 5/Data Science/Tugas Akhir/Tugas akhir/dataset/tweets.csv")
+trump_tweets = as.vector(trump_tweets)
+trump_tweets <- trump_tweets %>% select(text, klasifikasi)
 
 #klasifikasi ke dalam matriks
 t.tweets<-as.matrix(trump_tweets[trump_tweets$klasifikasi
-                                 %in% c("Positif","Negatif","Netral")
+                                 %in% c("Positif", "Negatif", "Netral")
                                  ,])
 
 #Naive Bayes
@@ -26,12 +28,12 @@ test.data <- t.tweets[-indexes,]
 classifier = naiveBayes(train.data, as.factor(train.data[,2]) )
 
 #Tes Validitas Naive Bayes
-predicted = predict(classifier, test.data[,1]); predicted
+predicted = predict(classifier, test.data[,2]); predicted
 table(test.data[, 2], predicted)
 nb_classifier = naiveBayes(train.data, as.factor(train.data[,2]) )
 summary(nb_classifier)
 result = confusionMatrix(as.factor(test.data[, 2]), predicted)
-
+result
 
 #Build a term-document matrix
 komen <- trump_tweets$text
@@ -44,10 +46,11 @@ komenc <- Corpus(VectorSource(komen))
 }
 head(a,n=100)
 
+
 #wordcloud
 
 #Barplot word
-
+klas <- count(as.vector(trump_tweets$klasifikasi))
 #Barplot Sentimen Analisis
 
 
@@ -92,18 +95,20 @@ ui <- dashboardPage( skin = "blue",
                                  fluidPage(
                                    h1("WordCloud")
                                  ), 
-                               wordcloud2Output("wcplot")
+                                 wordcloud2Output("wcplot")
                                  
                          ),
                          tabItem("FrequentWord",
                                  fluidPage(
                                    h1("Frequent Word"),
-                                   box(plotOutput("FrequentWord"), width = 500)
-                                 )       
+                                 ),
+                                 box(plotOutput("FrequentWord"), width = 500)
+                                 
                          )
                          
                        )
                      )
+                     
 )
 
 server <- function(input,output) {
@@ -122,10 +127,11 @@ server <- function(input,output) {
     result
   })
   
+  
   #Barplot Sentimen Analisis
   output$correlation <- renderPlot({
-    barplot(klas$jumlah, main = "Analisis Sentimen", xlab = "Jenis Sentimen",
-            ylab = "Jumlah Sentimen", names.arg = klas$klasifikasi, col = c("red", "lightblue", "lightgreen"))
+    barplot(klas$freq, main = "Analisis Sentimen", xlab = "Jenis Sentimen",
+            ylab = "Jumlah Sentimen", names.arg = klas$x, col = c("red", "lightblue", "lightgreen"))
   })
   
   #wordcloud
@@ -136,13 +142,12 @@ server <- function(input,output) {
   })
   
   #Barplot word Analisis
-  klas <- read.csv("~/Sentiment_Analysis/dataset/klasifikasi.csv", sep = ";", header = TRUE)
+  
   output$FrequentWord <- renderPlot({
     barplot(a[1:10,]$freq, las = 2, names.arg = a[1:10,]$word,
             col ="lightgreen", main ="Most frequent words",
             ylab = "Word frequencies")
   })
-  
   
 }
 
